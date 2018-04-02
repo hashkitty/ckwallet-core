@@ -27,8 +27,6 @@
             "name": "Mocha Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
-                // I removed some lines here
-                // check for yourself if you need them
                 "${workspaceFolder}/test"
             ],
             "internalConsoleOptions": "openOnSessionStart"
