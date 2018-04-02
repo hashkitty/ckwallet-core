@@ -162,6 +162,30 @@ function Database(config) {
         await sqlClient.update(schema.Tables.Kitties.Name, set, where);
     }
 
+    async function getTraits() {
+        let res = await sqlClient.all(
+            schema.Tables.Traits.Name,
+            [
+                schema.Tables.Traits.Fields.ID.Name,
+                schema.Tables.Traits.Fields.Name.Name,
+                schema.Tables.Traits.Fields.TraitTypeID.Name,
+                schema.Tables.Traits.Fields.DominantGen0.Name
+            ]
+        );
+        return res;
+    }
+
+    async function getKitties(query, limit) {
+        let fields = schema.getFieldsOfTable(schema.Tables.Kitties);
+        let res = await sqlClient.all(
+            schema.Tables.Kitties.Name,
+            fields,
+            query
+        );
+        return res;
+        
+    }
+
     this.open = open;
     this.close = close;
     this.getEventLastSync = getEventLastSync;
@@ -169,6 +193,8 @@ function Database(config) {
     this.updateKittyCooldown = updateKittyCooldown;
     this.updateEventLastSync = updateEventLastSync;
     this.updateKittyOwner = updateKittyOwner;
+    this.getTraits = getTraits;
+    this.getKitties = getKitties
 }
 
 module.exports = Database;

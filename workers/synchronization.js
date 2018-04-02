@@ -80,5 +80,3 @@ function stop() {
 
 exports.start = start;
 exports.stop = stop;
-
-start(1000*60*2);

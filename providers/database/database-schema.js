@@ -15,7 +15,18 @@ exports.Tables = {
         Name: "Kitties",
         Fields: {
             ID: tableField("ID", false),
-            Genes: tableField("Genes", false),
+            GenesBody: tableField("GenesBody", false),
+            GenesPattern: tableField("GenesPattern", false),
+            GenesEyeColor: tableField("GenesEyeColor", false),
+            GenesEyeType: tableField("GenesEyeType", false),
+            GenesBodyColor: tableField("GenesBodyColor", false),
+            GenesPatternColor: tableField("GenesPatternColor", false),
+            GenesAccentColor: tableField("GenesAccentColor", false),
+            GenesWild: tableField("GenesWild", false),
+            GenesMouth: tableField("GenesMouth", false),
+            GenesUnknown1: tableField("GenesUnknown1", false),
+            GenesUnknown2: tableField("GenesUnknown2", false),
+            GenesUnknown3: tableField("GenesUnknown3", false),
             Generation: tableField("Generation", false),
             MatronId: tableField("MatronId", false),
             PatronId: tableField("PatronId", false),
@@ -82,17 +93,20 @@ exports.Tables = {
             To: tableField("To", false),
             BlockNumber: tableField("BlockNumber", false)
         }
+    },
+    Traits: {
+        Name: "Traits",
+        Fields: {
+            ID: tableField("ID", false),
+            TraitTypeID: tableField("TraitTypeID", false),
+            Name: tableField("Name", false),
+            DominantGen0: tableField("DominantGen0", false)
+        }
     }
 };
 
 function getFieldsOfTable(table) {
-    let res = [];
-    let fields = table["Fields"];
-    if(fields) {
-        for(let key in fields) {
-            res.push(fields[key]);
-        }
-    }
+    let res = Object.keys(table["Fields"]);
     return res;
 }
 exports.getFieldsOfTable = getFieldsOfTable;

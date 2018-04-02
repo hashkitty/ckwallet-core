@@ -7,6 +7,9 @@ function Logger(config, listen) {
 
     function log(msg) {
         logger.info(msg);
+        if(console) {
+            console.log(msg);
+        }
     }
 
     function debug(msg) {
@@ -14,6 +17,9 @@ function Logger(config, listen) {
     }
     function error(err) {
         logger.error(err);
+        if(console) {
+            console.error(err);
+        }
     }
     function on(type, callback) {
         return logger.on(type, callback);

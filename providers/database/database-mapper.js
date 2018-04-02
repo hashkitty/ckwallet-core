@@ -1,5 +1,5 @@
 let schema = require("./database-schema");
-let BN = require("BigNumber");
+let {BigInteger} = require("BigNumber");
 
 function DatabaseMapper() {
     let tableNameMapping = {};
@@ -12,7 +12,18 @@ function DatabaseMapper() {
     //map kitty from Birth event data
     addTableMapping(schema.Tables.Kitties, "Birth");
     addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.ID, v => parseInt(v.returnValues["kittyId"]));
-    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.Genes, v => genesToBuffer(v.returnValues["genes"]));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesBody, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 0));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesPattern, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 4));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesEyeColor, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 8));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesEyeType, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 12));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesBodyColor, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 16));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesPatternColor, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 20));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesAccentColor, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 24));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesWild, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 28));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesMouth, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 32));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesUnknown1, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 36));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesUnknown2, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 40));
+    addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.GenesUnknown3, v => genesToInt(v.genes || (v.genes = new BigInteger(v.returnValues["genes"])), 44));
     addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.Generation, v => 0);
     addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.MatronId, v => parseInt(v.returnValues["matronId"]));
     addFieldMapping(schema.Tables.Kitties, schema.Tables.Kitties.Fields.PatronId, v => parseInt(v.returnValues["sireId"]));
@@ -65,14 +76,14 @@ function DatabaseMapper() {
         return new Buffer(res);
     }
     
-    function genesToBuffer(value) {
-        let res = []
-        let bn = new BN.BigInteger(value);
-        for(var i=0; i < 32; i++) {
-            let gen = bn.shiftRight(i * 8).modInt(256);
-            res.push(gen);
+    function genesToInt(bn, start) {
+        //convert each gen to its own byte for ease of query
+        let res = 0;
+        for(var i = start; i < start + 4; i++) {
+            let gen =  bn.shiftRight(i * 5).modInt(32);
+            res |= gen << 8*i;
         }
-        return new Buffer(res);
+        return res;
     }
     function priceToEther(value) {
         let price = utils.fromWei(value, "ether");

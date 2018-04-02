@@ -76,6 +76,30 @@ function SqlClient(config) {
         });
     }
 
+    //return all rows
+    function all(tableName, fieldNames, where, orderBy) {
+        if(!db) {
+            throw new Error("Not connected");
+        }
+        let sql = `SELECT ${fieldNames.join(',')} FROM ${tableName}`
+        if(where) {
+            sql += ` WHERE ${where}`;
+        }
+        if(orderBy) {
+            sql += ` ORDER BY ${orderBy.join(',')}`;
+        }
+        return new Promise(function(resolve, reject) {
+            db.all(sql, [], function(error, rows) {
+                if(error) {
+                    reject(error);
+                }
+                else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
     function update(tableName, set, where) {
         let sql = `UPDATE ${tableName} SET ${set} WHERE ${where}`;
         return new Promise(function(resolve, reject) {
@@ -143,6 +167,7 @@ function SqlClient(config) {
     this.open = open;
     this.close = close;
     this.get = get;
+    this.all = all;
     this.insert = insert;
     this.getUpdateStatement = getUpdateStatement;
     this.runStatements = runStatements;
