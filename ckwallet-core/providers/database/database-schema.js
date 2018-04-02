@@ -106,7 +106,7 @@ exports.Tables = {
 };
 
 function getFieldsOfTable(table) {
-  const res = Object.keys(table.Fields);
+  const res = Object.values(table.Fields);
   return res;
 }
 exports.getFieldsOfTable = getFieldsOfTable;

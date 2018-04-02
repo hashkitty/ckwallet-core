@@ -111,7 +111,7 @@ function Database(config) {
 
   async function addKitty(data) {
     const eventData = data;
-    eventData.genes = new BigInteger(data.returnValues.Genes);
+    eventData.genes = new BigInteger(data.returnValues.genes);
     const mapped = mapper.mapData('Birth', eventData);
     const owner = mapped.Owner;
     const ownerId = await getOrAddOwner(owner);

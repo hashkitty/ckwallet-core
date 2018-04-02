@@ -111,14 +111,14 @@ function SqlClient(config) {
     const params = [];
     const values = [];
     const fields = Object.keys(row);
-    for (let i = 1; i < fields.length; i += 1) {
+    for (let i = 0; i < fields.length; i += 1) {
       const field = fields[i];
-      params.push(`?${i}`);
+      params.push(`?${i + 1}`);
       values.push(row[field]);
     }
     const sql = `INSERT INTO ${tableName}(${fields.join(',')}) VALUES(${params.join(',')})`;
     return new Promise(((resolve, reject) => {
-      db.run(sql, values, (error) => {
+      db.run(sql, values, function (error) {
         if (error) {
           reject(error);
         } else {
@@ -139,14 +139,14 @@ function SqlClient(config) {
         db.run('BEGIN TRANSACTION', error => !error || reject(error));
         for (let i = 0; i < statements.length; i += 1) {
           // resolve when all statements are executed
-          statements[i].run([], ((error) => {
+          statements[i].run([], (function (error) {
             const cnt = this + 1;
             if (error) {
               reject(error);
             } else if (cnt === statements.length) {
               resolve();
             }
-          }));
+          }).bind(i));
         }
         db.run('COMMIT', error => !error || reject(error));
       });

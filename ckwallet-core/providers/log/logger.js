@@ -3,7 +3,7 @@ const Log = require('log');
 
 function Logger(config, listen) {
   const stream = listen ? fs.createReadStream(config.filename) : fs.createWriteStream(config.filename, { flags: 'a' });
-  const logger = new Log(config.level, stream);
+  const logger = new Log((config && config.level) || 'Debug', stream);
 
   function log(msg) {
     logger.info(msg);

@@ -20,6 +20,7 @@
   "homepage": "https://github.com/hashkitty/ckwallet#readme",
   "dependencies": {
     "bignumber": "^1.1.0",
+    "command-line-args": "^5.0.2",
     "log": "^1.4.0",
     "memory-cache": "^0.2.0",
     "sqlite3": "^4.0.0",
