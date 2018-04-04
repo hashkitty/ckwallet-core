@@ -15,11 +15,11 @@
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
+            "runtimeExecutable": "${workspaceRoot}/ckwallet-app/node_modules/.bin/electron",
             "windows": {
-                "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
+                "runtimeExecutable": "${workspaceRoot}/ckwallet-app/node_modules/.bin/electron.cmd"
             },
-            "args" : ["."]
+            "args" : ["./ckwallet-app/"]
         },
         {
             "type": "node",
