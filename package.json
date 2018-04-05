@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hashkitty/ckwallet.git"
+    "url": "git+https://github.com/hashkitty/ckwallet-core.git"
   },
   "author": "hashkittie@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hashkitty/ckwallet/issues"
+    "url": "https://github.com/hashkitty/ckwallet-core/issues"
   },
-  "homepage": "https://github.com/hashkitty/ckwallet#readme",
+  "homepage": "https://github.com/hashkitty/ckwallet-core#readme",
   "dependencies": {
     "bignumber": "^1.1.0",
     "command-line-args": "^5.0.2",
