@@ -1,12 +1,12 @@
 {
   "name": "ckwallet-core",
   "productName": "CK wallet core library",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "",
   "main": "./index.js",
   "scripts": {
     "test": "mocha",
-    "lint": "eslint ./"
+    "lint": "eslint ./ --fix"
   },
   "repository": {
     "type": "git",

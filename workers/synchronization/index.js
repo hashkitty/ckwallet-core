@@ -1,5 +1,15 @@
 const commandLineArgs = require('command-line-args');
-const sync = require('./synchronization');
+const DatabaseSync = require('./database-sync');
+const config = require('../../config/config.local.json');
+
+const databaseSync = new DatabaseSync(config);
+
+async function start(fast, interval) {
+  await databaseSync.run(fast);
+  if (interval) {
+    setTimeout(async () => start(fast, interval), interval);
+  }
+}
 
 const optionDefinitions = [
   { name: 'timeout', alias: 't', type: Number },
@@ -9,7 +19,7 @@ const optionDefinitions = [
 const options = commandLineArgs(optionDefinitions);
 
 function main() {
-  sync.start(options.fast, options.timeout);
+  start(options.fast, options.timeout);
 }
 
 main();

@@ -10,8 +10,8 @@ function Database(config) {
   const sqlClient = new SqlClient(config);
   const mapper = new DatabaseMapper();
 
-  function open(fast) {
-    return sqlClient.open(fast);
+  function open(fast, readOnly) {
+    return sqlClient.open(fast, readOnly);
   }
   function close() {
     return sqlClient.close();
@@ -183,12 +183,14 @@ function Database(config) {
     return res;
   }
 
-  async function getKitties(query) {
+  async function getKitties(query, orderBy = null, limit = 100) {
     const fields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => f.Name);
     const res = await sqlClient.all(
       schema.Tables.Kitties.Name,
       fields,
       query,
+      orderBy || [`${schema.Tables.Kitties.Fields.ID.Name} DESC`],
+      limit,
     );
     return res;
   }

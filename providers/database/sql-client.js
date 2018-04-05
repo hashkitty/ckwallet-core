@@ -2,33 +2,49 @@ const sqlite3 = require('sqlite3');
 
 function SqlClient(config) {
   let db;
-  function open(fast) {
+
+  function run(statement) {
+    if (!db) {
+      throw new Error('Not connected');
+    }
+    return new Promise((resolve, reject) => {
+      db.run(statement, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  function open(fast, readOnly) {
     if (db) {
       throw new Error('Already connected');
     }
     return new Promise(((resolve, reject) => {
+      const mode = readOnly ?
+        sqlite3.OPEN_READONLY :
+        (sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE); // eslint-disable-line no-bitwise
       db = new sqlite3.Database(
         `${config.filename}`,
-        sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, // eslint-disable-line no-bitwise
+        mode,
         ((error) => {
           if (error) {
             reject(error);
-          } else if (fast) {
-          // take the ris with non synchronous mode
-          // http://www.sqlite.org/pragma.html#pragma_synchronous
-            db.run('PRAGMA synchronous = OFF', (err) => {
-              if (err) {
-                reject(err);
-              } else {
-                resolve();
-              }
-            });
           } else {
             resolve();
           }
         }),
       );
-    }));
+    })).then(() => {
+      if (fast) {
+        // take the risk with non-synchronous mode
+        // http://www.sqlite.org/pragma.html#pragma_synchronous
+        return run('PRAGMA synchronous = OFF');
+      }
+      return true;
+    });
   }
 
   function close() {
@@ -38,9 +54,9 @@ function SqlClient(config) {
           if (error) {
             reject(error);
           } else {
+            db = null;
             resolve();
           }
-          db = null;
         });
       } else {
         resolve();
@@ -72,7 +88,7 @@ function SqlClient(config) {
   }
 
   // return all rows
-  function all(tableName, fieldNames, where, orderBy) {
+  function all(tableName, fieldNames, where, orderBy, limit = null) {
     if (!db) {
       throw new Error('Not connected');
     }
@@ -82,6 +98,9 @@ function SqlClient(config) {
     }
     if (orderBy) {
       sql += ` ORDER BY ${orderBy.join(',')}`;
+    }
+    if (limit) {
+      sql += ` LIMIT ${limit}`;
     }
     return new Promise(((resolve, reject) => {
       db.all(sql, [], (error, rows) => {
