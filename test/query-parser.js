@@ -66,6 +66,14 @@ describe('query-parser', () => {
     await database.open();
     const query = database.queryParser.translateUserInput('mainecoon crazy gen:1 tongue');
     const res = await database.getKitties(query);
-    assert(res.length === 1, `invalid result ${res.length}`);
+    assert(res && res.rows && res.rows.length === 1 && res.total === 1, `invalid result ${res.rows.length}`);
+  }).timeout(5000);
+
+  it('should make valid trait query to select from DB with limit', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    const query = database.queryParser.translateUserInput('crazy gen:1');
+    const res = await database.getKitties(query);
+    assert(res && res.rows && res.rows.length === 100 && res.total > 5000, `invalid result ${res.rows.length}`);
   }).timeout(5000);
 });

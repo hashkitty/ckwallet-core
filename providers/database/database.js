@@ -190,13 +190,25 @@ function Database(config) {
 
   async function getKitties(query, orderBy = null, limit = 100) {
     const fields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => f.Name);
-    const res = await sqlClient.all(
+    const rows = await sqlClient.all(
       schema.Tables.Kitties.Name,
       fields,
       query,
       orderBy || [`${schema.Tables.Kitties.Fields.ID.Name} DESC`],
       limit,
     );
+    let res;
+    if (rows && rows.length && limit) {
+      // get total if limit is specified for pagination
+      const total = await sqlClient.get(
+        schema.Tables.Kitties.Name,
+        ['COUNT(*) AS cnt'],
+        query,
+      );
+      res = { rows, total: total.cnt };
+    } else {
+      res = rows;
+    }
     return res;
   }
 

@@ -64,8 +64,15 @@ function SqlClient(config) {
     }));
   }
 
+  function checkOrderBy(orderBy) {
+    return orderBy && (orderBy instanceof Array) &&
+    orderBy.every(v => /^[a-zA-Z0-9\s]+$/.test(v));
+  }
   // return single row
   function get(tableName, fieldNames, where, orderBy) {
+    if (orderBy && !checkOrderBy(orderBy)) {
+      throw new Error('Invalid arg: orderBy');
+    }
     if (!db) {
       throw new Error('Not connected');
     }
@@ -89,6 +96,10 @@ function SqlClient(config) {
 
   // return all rows
   function all(tableName, fieldNames, where, orderBy, limit = null) {
+    if (orderBy && !checkOrderBy(orderBy)) {
+      throw new Error('Invalid arg: orderBy');
+    }
+
     if (!db) {
       throw new Error('Not connected');
     }
