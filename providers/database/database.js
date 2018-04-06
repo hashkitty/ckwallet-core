@@ -11,9 +11,13 @@ function Database(config) {
   const sqlClient = new SqlClient(config);
   const mapper = new DatabaseMapper();
 
-  function open(fast, readOnly) {
-    return sqlClient.open(fast, readOnly);
+  async function open(fast, readOnly) {
+    await sqlClient.open(fast, readOnly);
+    if (this.queryParser) {
+      await this.queryParser.initialize();
+    }
   }
+
   function close() {
     return sqlClient.close();
   }
@@ -155,7 +159,7 @@ function Database(config) {
     const cooldownIndex = getCooldownIndex(patron);
     where = `${schema.Tables.Kitties.Fields.ID.Name}=${mapped.PatronId}`;
     const value = `SELECT ${schema.Tables.Cooldowns.Fields.CooldownBlocks.Name} ` +
-        `+ ${mapped.BlockNumber} FROM ${schema.Tables.Cooldowns.Name} WHERE ID=${cooldownIndex}`;
+      `+ ${mapped.BlockNumber} FROM ${schema.Tables.Cooldowns.Name} WHERE ID=${cooldownIndex}`;
     set = `${schema.Tables.Kitties.Fields.NextActionAt.Name}=(${value})`;
     const patronUpdate = sqlClient.getUpdateStatement(schema.Tables.Kitties.Name, set, where);
     await sqlClient.runStatements([matronUpdate, patronUpdate]);

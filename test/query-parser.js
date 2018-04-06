@@ -64,9 +64,7 @@ describe('query-parser', () => {
   it('should make valid trait query to select from DB', async () => {
     const database = new Database(config.database);
     await database.open();
-    const parser = new QueryParser(database);
-    await parser.initialize();
-    const query = parser.translateUserInput('mainecoon crazy gen:1 tongue');
+    const query = database.queryParser.translateUserInput('mainecoon crazy gen:1 tongue');
     const res = await database.getKitties(query);
     assert(res.length === 1, `invalid result ${res.length}`);
   }).timeout(5000);

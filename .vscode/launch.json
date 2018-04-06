@@ -11,17 +11,6 @@
             "program": "${file}"
         },
         {
-            "name": "Debug Electon Main Process",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "${workspaceRoot}/ckwallet-app/node_modules/.bin/electron",
-            "windows": {
-                "runtimeExecutable": "${workspaceRoot}/ckwallet-app/node_modules/.bin/electron.cmd"
-            },
-            "args" : ["./ckwallet-app/"]
-        },
-        {
             "type": "node",
             "request": "launch",
             "name": "Mocha Tests",
