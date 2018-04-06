@@ -3,6 +3,7 @@ const DatabaseMapper = require('./database-mapper');
 const schema = require('./database-schema');
 const constants = require('./constants');
 const Cache = require('./cache');
+const QueryParser = require('./query-parser');
 const { BigInteger } = require('bignumber');
 
 function Database(config) {
@@ -204,6 +205,7 @@ function Database(config) {
   this.updateKittyOwner = updateKittyOwner;
   this.getTraits = getTraits;
   this.getKitties = getKitties;
+  this.queryParser = new QueryParser(this);
 }
 
 module.exports = Database;
