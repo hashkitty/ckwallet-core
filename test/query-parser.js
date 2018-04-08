@@ -76,4 +76,43 @@ describe('query-parser', () => {
     const res = await database.getKitties(query);
     assert(res && res.rows && res.rows.length === 100 && res.total > 5000, `invalid result ${res.rows.length}`);
   }).timeout(5000);
+
+  it('should make valid hex trait type query', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    let res = database.queryParser.translateUserInput('body:0x01');
+    assert(res.toUpperCase() === 'GENESBODY & 0XFF = 1', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('mouth:0x0101');
+    assert(res.toUpperCase() === 'GENESMOUTH & 0XFFFF = 257', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('pattern:0x010101');
+    assert(res.toUpperCase() === 'GENESPATTERN & 0XFFFFFF = 65793', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('eyecolor:0x01010101');
+    assert(res.toUpperCase() === 'GENESEYECOLOR & 0XFFFFFFFF = 16843009', `invalid result ${res}`);
+  });
+
+  it('should make valid kai trait type query', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    let res = database.queryParser.translateUserInput('body:2');
+    assert(res.toUpperCase() === 'GENESBODY & 0XFF = 1', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('mouth:22');
+    assert(res.toUpperCase() === 'GENESMOUTH & 0XFFFF = 257', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('pattern:222');
+    assert(res.toUpperCase() === 'GENESPATTERN & 0XFFFFFF = 65793', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('eyecolor:2222');
+    assert(res.toUpperCase() === 'GENESEYECOLOR & 0XFFFFFFFF = 16843009', `invalid result ${res}`);
+  });
+
+  it('should return input suggestions', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    const res = database.queryParser.getInputSuggestions();
+    assert(res && res.length >= 160);
+  });
 });

@@ -176,14 +176,21 @@ function Database(config) {
   }
 
   async function getTraits() {
+    const join = `${schema.Tables.TraitTypes.Name} AS l ` +
+    `ON t.${schema.Tables.Traits.Fields.TraitTypeID.Name}=l.${schema.Tables.TraitTypes.Fields.ID.Name}`;
     const res = await sqlClient.all(
-      schema.Tables.Traits.Name,
+      `${schema.Tables.Traits.Name} AS t`,
       [
-        schema.Tables.Traits.Fields.ID.Name,
-        schema.Tables.Traits.Fields.Name.Name,
+        `t.${schema.Tables.Traits.Fields.ID.Name}`,
+        `t.${schema.Tables.Traits.Fields.Name.Name}`,
         schema.Tables.Traits.Fields.TraitTypeID.Name,
         schema.Tables.Traits.Fields.DominantGen0.Name,
+        `l.${schema.Tables.TraitTypes.Fields.Name.Name} AS Location`,
       ],
+      null,
+      null,
+      null,
+      join,
     );
     return res;
   }

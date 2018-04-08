@@ -103,6 +103,13 @@ exports.Tables = {
       DominantGen0: tableField('DominantGen0', false),
     },
   },
+  TraitTypes: {
+    Name: 'TraitTypes',
+    Fields: {
+      ID: tableField('ID', false),
+      Name: tableField('Name', false),
+    },
+  },
 };
 
 function getFieldsOfTable(table) {

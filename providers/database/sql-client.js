@@ -95,7 +95,7 @@ function SqlClient(config) {
   }
 
   // return all rows
-  function all(tableName, fieldNames, where, orderBy, limit = null) {
+  function all(tableName, fieldNames, where, orderBy, limit = null, join = null) {
     if (orderBy && !checkOrderBy(orderBy)) {
       throw new Error('Invalid arg: orderBy');
     }
@@ -104,6 +104,9 @@ function SqlClient(config) {
       throw new Error('Not connected');
     }
     let sql = `SELECT ${fieldNames.join(',')} FROM ${tableName}`;
+    if (join) {
+      sql += ` JOIN ${join}`;
+    }
     if (where) {
       sql += ` WHERE ${where}`;
     }

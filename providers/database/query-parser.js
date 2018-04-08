@@ -1,5 +1,6 @@
 const assert = require('assert');
 const { Tables } = require('./database-schema');
+const geneUtils = require('../genetics/utils');
 
 function QueryType(name, prefixes) {
   this.name = name;
@@ -22,6 +23,7 @@ function QueryParser(database) {
 
   const QueryTypes = Object.freeze({
     Trait: new QueryType('trait', ['d', 'r1', 'r2', 'r3']),
+    TraitType: new QueryType('traittype', []),
     Generation: new QueryType('generation', ['gen']),
   });
 
@@ -29,13 +31,21 @@ function QueryParser(database) {
 
   async function initialize() {
     if (!traitMap && database) {
+      const locations = {};
       const traits = await database.getTraits();
-      traitMap = {};
+      traitMap = {
+        traits: {},
+        locations: {},
+      };
       for (let i = 0; i < traits.length; i += 1) {
         const trait = traits[i];
         assert(!traitMap[trait.Name]);
         traitMap[trait.Name] = trait;
+        traitMap[trait.Name] = trait;
+        const location = trait.Location.toLowerCase().replace(' ', '');
+        locations[location] = 0;
       }
+      QueryTypes.TraitType.prefixes.push(...Object.keys(locations));
     }
   }
 
@@ -72,6 +82,34 @@ function QueryParser(database) {
       res = QueryTypes.Trait;// trait is default search type
     }
     return res;
+  }
+
+  function getTraitTypeQuery(prefix, word) {
+    if (!/^[a-zA-Z]+$/.test(prefix) || !/^[a-zA-Z0-9]+$/.test(word)) {
+      throw new Error('Invalid trait type query');
+    }
+    let value = 0;
+    let mask = 'ffffffff';
+    if (word.startsWith('0x')) {
+      // this hex value
+      if (word.length > 10 || word.length < 3) {
+        throw new Error('Invalid trait type query');
+      }
+      value = parseInt(word.substring(2), 16);
+      mask = mask.substr(8 - (word.length - 2));
+    } else {
+      // this is kai
+      if (word.length > 4 || word.length < 1) {
+        throw new Error('Invalid trait type query');
+      }
+      value = 0;
+      for (let i = 0; i < word.length; i += 1) {
+        value |= geneUtils.kaiToInt(word[i]) << i*8; //eslint-disable-line
+      }
+      mask = mask.substr(8 - (word.length * 2));
+    }
+
+    return `genes${prefix} & 0x${mask} = ${value}`;
   }
 
   function getTraitQuery(prefix, word) {
@@ -117,6 +155,7 @@ function QueryParser(database) {
     if (!word) {
       throw new Error(`Invalid statement ${word}`);
     }
+    word = word.toLowerCase().trim(); // eslint-disable-line
     if (isSqlOperator(word)) {
       res = word;
     } else if (keyword = getKeyword(word)) { // eslint-disable-line no-cond-assign
@@ -130,6 +169,9 @@ function QueryParser(database) {
       // assign default prefix if omitted
       prefixedWord.prefix = prefixedWord.prefix || type.prefixes[0];
       switch (type) {
+        case QueryTypes.TraitType:
+          res = getTraitTypeQuery(prefixedWord.prefix, prefixedWord.word);
+          break;
         case QueryTypes.Trait:
           res = getTraitQuery(prefixedWord.prefix, prefixedWord.word);
           break;
@@ -177,6 +219,24 @@ function QueryParser(database) {
     return res;
   }
 
+  function getInputSuggestions() {
+    const res = [];
+    // trait names
+    if (traitMap) {
+      res.push(...Object.keys(traitMap));
+    }
+
+    // prefixes
+    Object.values(QueryTypes).forEach((element) => {
+      res.push(...element.prefixes.map(p => `${p}:`));
+    });
+
+    // keywords
+    res.push(...Keywords.map(k => k.name));
+    return res;
+  }
+
+  this.getInputSuggestions = getInputSuggestions;
   this.translateUserInput = translateUserInput;
   this.initialize = initialize;
 }

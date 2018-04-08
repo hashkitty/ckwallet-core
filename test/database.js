@@ -17,7 +17,7 @@ describe('database', () => {
     const database = new Database(config.database);
     await database.open();
     // test positive
-    await database.getKitties(null, ['ID']);
+    await database.getKitties();
 
     await throwsAsync(async () => {
       await database.getKitties(null, 'test');
