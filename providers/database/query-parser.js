@@ -33,10 +33,7 @@ function QueryParser(database) {
     if (!traitMap && database) {
       const locations = {};
       const traits = await database.getTraits();
-      traitMap = {
-        traits: {},
-        locations: {},
-      };
+      traitMap = {};
       for (let i = 0; i < traits.length; i += 1) {
         const trait = traits[i];
         assert(!traitMap[trait.Name]);

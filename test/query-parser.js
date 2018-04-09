@@ -113,6 +113,6 @@ describe('query-parser', () => {
     const database = new Database(config.database);
     await database.open();
     const res = database.queryParser.getInputSuggestions();
-    assert(res && res.length >= 160);
+    assert(res && res.length >= 158);
   });
 });
