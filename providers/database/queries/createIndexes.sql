@@ -1,0 +1,10 @@
+CREATE INDEX IND_GenesBody ON Kitties(GenesBody);
+CREATE INDEX IND_GenesPattern ON Kitties(GenesPattern);
+CREATE INDEX IND_GenesEyeColor ON Kitties(GenesEyeColor);
+CREATE INDEX IND_GenesEyeType ON Kitties(GenesEyeType);
+CREATE INDEX IND_GenesBodyColor ON Kitties(GenesBodyColor);
+CREATE INDEX IND_GenesPatternColor ON Kitties(GenesPatternColor);
+CREATE INDEX IND_GenesAccentColor ON Kitties(GenesAccentColor);
+CREATE INDEX IND_GenesWild ON Kitties(GenesWild);
+CREATE INDEX IND_GenesMouth ON Kitties(GenesMouth);
+CREATE INDEX IND_Generation ON Kitties(Generation);

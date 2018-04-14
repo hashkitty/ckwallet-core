@@ -1,10 +1,11 @@
-let assert = require('assert');
-let CryptoKittiesClient = require('../ethereum/cryptokitties-client');
+const assert = require('assert');
+const CryptoKittiesClient = require('../providers/ethereum/cryptokitties-client');
+const config = require('../config/config.local.json');
 
-describe('keymanager', function() {
-    it('should create CK core client with provided configuration', function(done) {
-        let config = require("../config/ethereum-config.json");
-        let client = new CryptoKittiesClient(config);
-        done();
-    });
-})
+describe('keymanager', () => {
+  it('should create CK core client with provided configuration', (done) => {
+    const client = new CryptoKittiesClient(config);
+    assert(client);
+    done();
+  });
+});

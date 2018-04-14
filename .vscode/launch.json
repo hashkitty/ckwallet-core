@@ -11,24 +11,11 @@
             "program": "${file}"
         },
         {
-            "name": "Debug Electon Main Process",
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron",
-            "windows": {
-                "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
-            },
-            "args" : ["."]
-        },
-        {
             "type": "node",
             "request": "launch",
             "name": "Mocha Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [
-                // I removed some lines here
-                // check for yourself if you need them
                 "${workspaceFolder}/test"
             ],
             "internalConsoleOptions": "openOnSessionStart"

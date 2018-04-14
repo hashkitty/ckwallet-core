@@ -12,7 +12,8 @@
     },
     "logger": {
         "level": "debug",
-        "filename": "./logs/ckwallet.log"
+        "filename": "./logs/ckwallet.log",
+        "logToConsole": true
     },
     "synchronization" : {
         "interval": 600000

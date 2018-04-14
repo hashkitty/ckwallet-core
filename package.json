@@ -1,33 +1,35 @@
 {
-  "name": "ckwallet",
-  "productName": "CK wallet",
-  "version": "0.1.0",
+  "name": "ckwallet-core",
+  "productName": "CK wallet core library",
+  "version": "0.3.0",
   "description": "",
-  "main": "./app/main.js",
+  "main": "./index.js",
   "scripts": {
-    "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "lint": "eslint ./ --fix"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hashkitty/ckwallet.git"
+    "url": "git+https://github.com/hashkitty/ckwallet-core.git"
   },
-  "author": "",
+  "author": "hashkittie@gmail.com",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/hashkitty/ckwallet/issues"
+    "url": "https://github.com/hashkitty/ckwallet-core/issues"
   },
-  "homepage": "https://github.com/hashkitty/ckwallet#readme",
+  "homepage": "https://github.com/hashkitty/ckwallet-core#readme",
   "dependencies": {
     "bignumber": "^1.1.0",
+    "command-line-args": "^5.0.2",
     "log": "^1.4.0",
     "memory-cache": "^0.2.0",
     "sqlite3": "^4.0.0",
     "web3": "^1.0.0-beta.29"
   },
   "devDependencies": {
-    "electron": "^1.8.4",
-    "electron-rebuild": "^1.7.3",
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.10.0",
     "mocha": "^5.0.4"
   }
 }

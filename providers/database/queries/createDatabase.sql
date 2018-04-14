@@ -47,7 +47,18 @@ INSERT INTO Owners("Address") VALUES (0);
 --Kitties
 CREATE TABLE "Kitties" ( 
     "ID" [int] NOT NULL,
-    "Genes" [binary] (32) NOT NULL,
+    "GenesBody" [int] NOT NULL,
+    "GenesPattern" [int] NOT NULL,
+    "GenesEyeColor" [int] NOT NULL,
+    "GenesEyeType" [int] NOT NULL,
+    "GenesBodyColor" [int] NOT NULL,
+    "GenesPatternColor" [int] NOT NULL,
+    "GenesAccentColor" [int] NOT NULL,
+    "GenesWild" [int] NOT NULL,
+    "GenesMouth" [int] NOT NULL,
+    "GenesUnknown1" [int] NOT NULL,
+    "GenesUnknown2" [int] NOT NULL,
+    "GenesUnknown3" [int] NOT NULL,
     "Generation" [int] NOT NULL,
     "MatronId" [int] NOT NULL,
     "PatronId" [int] NOT NULL,
@@ -64,8 +75,28 @@ CREATE TABLE "Kitties" (
 );
 
 --Kitty 0
-INSERT INTO Kitties("ID", "Genes", "Generation", "MatronId", "PatronId", "BirthBlock", "Breeder", "Owner", "ChildrenCount", "NextActionAt")
-VALUES(0, -1, 0, 0, 0, 4605167, 1, 1, 0, NULL);
+INSERT INTO Kitties("ID",
+    "GenesBody",
+    "GenesPattern",
+    "GenesEyeColor",
+    "GenesEyeType",
+    "GenesBodyColor",
+    "GenesPatternColor",
+    "GenesAccentColor",
+    "GenesWild",
+    "GenesMouth",
+    "GenesUnknown1",
+    "GenesUnknown2",
+    "GenesUnknown3",
+    "Generation",
+    "MatronId",
+    "PatronId",
+    "BirthBlock",
+    "Breeder",
+    "Owner",
+    "ChildrenCount",
+    "NextActionAt")
+VALUES(0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0, 4605167, 1, 1, 0, NULL);
 
 --Update children count trigger and kitty generation
 CREATE TRIGGER KittiesAfterInsert
@@ -76,11 +107,6 @@ BEGIN
     UPDATE Kitties
     SET ChildrenCount = ChildrenCount + 1
     WHERE ID = NEW.MatronId OR ID = NEW.PatronId AND NEW.MatronId <> 0;
-
-    --Update generation for child
-    UPDATE Kitties
-    SET Generation = (SELECT MAX(Generation) + 1 FROM Kitties WHERE ID = NEW.MatronId OR ID = NEW.PatronId)
-    WHERE ID = NEW.ID;
 END;
 
 --Import History
@@ -112,4 +138,33 @@ VALUES(0, 4),
 (11, 11520),
 (12, 23040),
 (13, 40320);
+
+--Traits
+CREATE TABLE Traits (
+    "ID" [tinyint] NOT NULL,
+    "TraitTypeID" [tinyint] NOT NULL,
+    "Name" nvarchar(250) NOT NULL UNIQUE,
+    "DominantGen0" bit 
+);
+
+CREATE TABLE TraitTypes (
+    "ID" [tinyint] NOT NULL,
+    "Name" nvarchar(250) NOT NULL UNIQUE
+);
+
+--Trait types
+INSERT INTO TraitTypes("ID", "Name") 
+VALUES 
+(0, "Body"),
+(1, "Pattern"),
+(2, "Eye Color"),
+(3, "Eye Type"),
+(4, "Body Color"),
+(5, "Pattern Color"),
+(6, "Accent Color"),
+(7, "Wild"),
+(8, "Mouth"),
+(9, "Unknown1"),
+(10, "Unknown2"),
+(11, "Unknown3");
 
