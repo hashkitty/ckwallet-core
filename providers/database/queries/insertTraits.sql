@@ -64,6 +64,7 @@ VALUES
 (5, 3, 1, "simple"),
 (6, 3, 1, "crazy"),
 (7, 3, 1, "thicccbrowz"),
+(8, 3, 0, "caffeine"),
 (10, 3, 0, "baddate"),
 (12, 3, 1, "chronic"),
 (13, 3, 1, "slyboots"),
@@ -152,4 +153,8 @@ VALUES
 (21, 8, 0, "grimace"),
 (23, 8, 0, "tongue"),
 (24, 8, 0, "yokel"),
-(30, 8, 0, "neckbeard");
+(30, 8, 0, "neckbeard"),
+--wild 
+(17, 7, 0, "elk"),
+(19, 7, 0, "trioculus"),
+(20, 7, 0, "daemonwings");

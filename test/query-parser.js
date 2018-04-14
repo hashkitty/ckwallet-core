@@ -69,6 +69,14 @@ describe('query-parser', () => {
     assert(res && res.rows && res.rows.length === 1 && res.total === 1, `invalid result ${res.rows.length}`);
   }).timeout(5000);
 
+  it('should make valid recessive trait query to select from DB', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    const query = database.queryParser.translateUserInput('r1:crazy');
+    const res = await database.getKitties(query);
+    assert(res && res.rows && res.rows.length > 0 && res.total > 10000, `invalid result ${res.rows.length}`);
+  }).timeout(5000);
+
   it('should make valid trait query to select from DB with limit', async () => {
     const database = new Database(config.database);
     await database.open();

@@ -135,8 +135,9 @@ function QueryParser(database) {
     const traitOffset = QueryTypes.Trait.prefixes.indexOf(prefix);
     assert(traitOffset >= 0, `Invalid prefix ${prefix}`);
     const traitMask = 0xff << (traitOffset * 8);// eslint-disable-line no-bitwise
+    const value = trait.ID << (traitOffset * 8);// eslint-disable-line no-bitwise
     const column = geneColumns[trait.TraitTypeID].Name;
-    return `${column} & ${traitMask} = ${trait.ID}`;
+    return `${column} & ${traitMask} = ${value}`;
   }
 
   function getGenerationQuery(prefix, word) {
