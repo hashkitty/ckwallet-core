@@ -1,7 +1,7 @@
 {
   "name": "ckwallet-core",
   "productName": "CK wallet core library",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "",
   "main": "./index.js",
   "scripts": {
