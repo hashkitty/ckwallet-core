@@ -75,6 +75,9 @@ function DatabaseSync(config) {
       await synchronizeEvent(database, kittyClient, currentBlock, 'SaleAuctionCreated', (d, e) => proccessAuctionCreated(d, e, 1));
       await synchronizeEvent(database, kittyClient, currentBlock, 'SaleAuctionCancelled', (d, e) => proccessAuctionCancelled(d, e, 1));
       await synchronizeEvent(database, kittyClient, currentBlock, 'SaleAuctionSuccessful', (d, e) => proccessAuctionCompleted(d, e, 1));
+      await synchronizeEvent(database, kittyClient, currentBlock, 'SireAuctionCreated', (d, e) => proccessAuctionCreated(d, e, 2));
+      await synchronizeEvent(database, kittyClient, currentBlock, 'SireAuctionCancelled', (d, e) => proccessAuctionCancelled(d, e, 2));
+      await synchronizeEvent(database, kittyClient, currentBlock, 'SireAuctionSuccessful', (d, e) => proccessAuctionCompleted(d, e, 2));
       logger.log('Synchronization completed');
     } catch (err) {
       logger.error(`Synchronization error: ${err}`);

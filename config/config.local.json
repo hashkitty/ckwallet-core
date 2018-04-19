@@ -1,6 +1,6 @@
 {
     "ethereum": {
-        "rpcUrl": "",
+        "rpcUrl": "https://mainnet.infura.io/cbRDKUhDmEWYWrQEdOLS",
         "rpcTimeout": 10000,
         "ckCoreAddress": "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
         "ckSaleAuctionAddress": "0xb1690c08e213a35ed9bab7b318de14420fb57d8c",

@@ -19,6 +19,8 @@ function QueryParser(database) {
 
   const Keywords = [
     new Keyword('virgin', `k.${Tables.Kitties.Fields.ChildrenCount.Name}=0`),
+    new Keyword('sale', `a.${Tables.Auctions.Fields.Type.Name}=1`),
+    new Keyword('sire', `a.${Tables.Auctions.Fields.Type.Name}=2`),
   ];
 
   const QueryTypes = Object.freeze({

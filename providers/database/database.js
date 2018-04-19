@@ -243,6 +243,7 @@ function Database(config) {
   async function getKittiesWithAuctions(query, orderBy = null, limit = 100) {
     const kittyFields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => `k.${f.Name}`);
     const auctionFields = [
+      schema.Tables.Auctions.Fields.Type,
       schema.Tables.Auctions.Fields.StartedBlock,
       schema.Tables.Auctions.Fields.Duration,
       schema.Tables.Auctions.Fields.StartPrice,
@@ -267,6 +268,9 @@ function Database(config) {
         `${schema.Tables.Kitties.Name} AS k`,
         ['COUNT(*) AS cnt'],
         query,
+        null,
+        join,
+        true,
       );
       res = { rows, total: total.cnt };
     } else {
@@ -275,6 +279,36 @@ function Database(config) {
     return res;
   }
 
+  async function getAuctions(query, orderBy = null, limit = 100) {
+    const kittyFields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => `k.${f.Name}`);
+    const auctionFields = schema.getFieldsOfTable(schema.Tables.Auctions).map(f => `a.${f.Name} AS Auction${f.Name}`);
+    const fields = kittyFields.concat(auctionFields);
+
+    const join = `${schema.Tables.Kitties.Name} AS k ON a.${schema.Tables.Auctions.Fields.KittyId.Name} = k.${schema.Tables.Kitties.Fields.ID.Name}`;
+    const rows = await sqlClient.all(
+      `${schema.Tables.Auctions.Name} AS a`,
+      fields,
+      query,
+      orderBy || [`a.${schema.Tables.Auctions.Fields.ID.Name} DESC`],
+      limit,
+      join,
+    );
+    let res;
+    if (rows && rows.length && limit) {
+      // get total if limit is specified for pagination
+      const total = await sqlClient.get(
+        `${schema.Tables.Auctions.Name} AS a`,
+        ['COUNT(*) AS cnt'],
+        query,
+        null,
+        join,
+      );
+      res = { rows, total: total.cnt };
+    } else {
+      res = rows;
+    }
+    return res;
+  }
 
   async function addAuction(data, type) {
     const eventData = data;
@@ -296,6 +330,7 @@ function Database(config) {
     const where = `${Auctions.Fields.ID.Name}=(SELECT ID FROM ${Auctions.Name} ` +
     `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
     `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
+    `AND  ${Auctions.Fields.Type.Name}=${mapped[Auctions.Fields.Type.Name]} ` +
     `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
 
     const set = `${Auctions.Fields.Status.Name}=${mapped[Auctions.Fields.Status.Name]},` +
@@ -315,6 +350,7 @@ function Database(config) {
     const where = `${Auctions.Fields.ID.Name}=(SELECT ID FROM ${Auctions.Name} ` +
     `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
     `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
+    `AND  ${Auctions.Fields.Type.Name}=${mapped[Auctions.Fields.Type.Name]} ` +
     `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
 
     const set = `${Auctions.Fields.Status.Name}=${mapped[Auctions.Fields.Status.Name]},` +
@@ -338,6 +374,7 @@ function Database(config) {
   this.addAuction = addAuction;
   this.cancelAuction = cancelAuction;
   this.completeAuction = completeAuction;
+  this.getAuctions = getAuctions;
   this.queryParser = new QueryParser(this);
 }
 
