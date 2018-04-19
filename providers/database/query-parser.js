@@ -18,7 +18,7 @@ function QueryParser(database) {
   const allowedSqlOperator = ['and', 'or'];
 
   const Keywords = [
-    new Keyword('virgin', `${Tables.Kitties.Fields.ChildrenCount.Name}=0`),
+    new Keyword('virgin', `k.${Tables.Kitties.Fields.ChildrenCount.Name}=0`),
   ];
 
   const QueryTypes = Object.freeze({
@@ -106,7 +106,7 @@ function QueryParser(database) {
       mask = mask.substr(8 - (word.length * 2));
     }
 
-    return `genes${prefix} & 0x${mask} = ${value}`;
+    return `k.genes${prefix} & 0x${mask} = ${value}`;
   }
 
   function getTraitQuery(prefix, word) {
@@ -137,14 +137,14 @@ function QueryParser(database) {
     const traitMask = 0xff << (traitOffset * 8);// eslint-disable-line no-bitwise
     const value = trait.ID << (traitOffset * 8);// eslint-disable-line no-bitwise
     const column = geneColumns[trait.TraitTypeID].Name;
-    return `${column} & ${traitMask} = ${value}`;
+    return `k.${column} & ${traitMask} = ${value}`;
   }
 
   function getGenerationQuery(prefix, word) {
     if (!/^[0-9]+$/.test(word)) {
       throw new Error(`Invalid generation query: ${word}`);
     }
-    return `${Tables.Kitties.Fields.Generation.Name}=${word}`;
+    return `k.${Tables.Kitties.Fields.Generation.Name}=${word}`;
   }
 
   function translateWord(word) {

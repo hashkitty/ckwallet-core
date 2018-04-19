@@ -217,19 +217,19 @@ function Database(config) {
   }
 
   async function getKitties(query, orderBy = null, limit = 100) {
-    const fields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => f.Name);
+    const fields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => `k.${f.Name}`);
     const rows = await sqlClient.all(
-      schema.Tables.Kitties.Name,
+      `${schema.Tables.Kitties.Name} AS k`,
       fields,
       query,
-      orderBy || [`${schema.Tables.Kitties.Fields.ID.Name} DESC`],
+      orderBy || [`k.${schema.Tables.Kitties.Fields.ID.Name} DESC`],
       limit,
     );
     let res;
     if (rows && rows.length && limit) {
       // get total if limit is specified for pagination
       const total = await sqlClient.get(
-        schema.Tables.Kitties.Name,
+        `${schema.Tables.Kitties.Name} AS k`,
         ['COUNT(*) AS cnt'],
         query,
       );
