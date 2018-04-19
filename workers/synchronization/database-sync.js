@@ -5,6 +5,7 @@ const Logger = require('../../providers/log/logger');
 function DatabaseSync(config) {
   let logger = null;
 
+
   async function proccessBirthEvent(database, eventData) {
     await database.addKitty(eventData);
   }
@@ -16,6 +17,19 @@ function DatabaseSync(config) {
   async function proccessTransferEvent(database, eventData) {
     await database.updateKittyOwner(eventData);
   }
+
+  async function proccessAuctionCreated(database, eventData, type) {
+    await database.addAuction(eventData, type);
+  }
+
+  async function proccessAuctionCancelled(database, eventData, type) {
+    await database.cancelAuction(eventData, type);
+  }
+
+  async function proccessAuctionCompleted(database, eventData, type) {
+    await database.completeAuction(eventData, type);
+  }
+
 
   async function synchronizeEvent(database, kittyClient, currentBlock, eventName, handler) {
     const lastSyncBlock = await database.getEventLastSync(eventName);
@@ -49,7 +63,8 @@ function DatabaseSync(config) {
     logger = new Logger(config.logger);
     const kittyClient = new CryptoKittiesClient(config.ethereum);
     const database = new Database(config.database);
-    const currentBlock = await kittyClient.getCurrentBlockNumber();
+    const currentBlock = await kittyClient.getCurrentBlockNumber() -
+      config.ethereum.confimationBlocks;
 
     logger.log('Synchronization started');
     try {
@@ -57,6 +72,9 @@ function DatabaseSync(config) {
       await synchronizeEvent(database, kittyClient, currentBlock, 'Birth', proccessBirthEvent);
       await synchronizeEvent(database, kittyClient, currentBlock, 'Pregnant', proccessPregnantEvent);
       await synchronizeEvent(database, kittyClient, currentBlock, 'Transfer', proccessTransferEvent);
+      await synchronizeEvent(database, kittyClient, currentBlock, 'SaleAuctionCreated', (d, e) => proccessAuctionCreated(d, e, 1));
+      await synchronizeEvent(database, kittyClient, currentBlock, 'SaleAuctionCancelled', (d, e) => proccessAuctionCancelled(d, e, 1));
+      await synchronizeEvent(database, kittyClient, currentBlock, 'SaleAuctionSuccessful', (d, e) => proccessAuctionCompleted(d, e, 1));
       logger.log('Synchronization completed');
     } catch (err) {
       logger.error(`Synchronization error: ${err}`);

@@ -1,16 +1,12 @@
 const { Tables } = require('./database-schema');
+const utils = require('web3-utils');
 
 function DatabaseMapper() {
-  const tableNameMapping = {};
   const tableFieldMapping = {};
 
-  function addTableMapping(table, eventName) {
-    tableNameMapping[eventName] = table;
-  }
-
-  function addFieldMapping(tableName, fieldName, func) {
-    tableFieldMapping[tableName.Name] = tableFieldMapping[tableName.Name] || {};
-    tableFieldMapping[tableName.Name][fieldName.Name] = func;
+  function addFieldMapping(name, field, func) {
+    tableFieldMapping[name] = tableFieldMapping[name] || {};
+    tableFieldMapping[name][field.Name] = func;
   }
   function toHexString(buffer) {
     let res = '0x';
@@ -45,10 +41,9 @@ function DatabaseMapper() {
     return res;
   }
 
-  function mapData(objectName, data) {
-    const tableName = tableNameMapping[objectName].Name;
+  function mapData(name, data) {
     const res = {};
-    const fieldMappings = tableFieldMapping[tableName];
+    const fieldMappings = tableFieldMapping[name];
     const fieldNames = Object.keys(fieldMappings);
     fieldNames.forEach((fieldName) => {
       const mapping = fieldMappings[fieldName];
@@ -57,53 +52,80 @@ function DatabaseMapper() {
     return res;
   }
 
+  function priceToEther(value) {
+    const price = utils.fromWei(value, 'ether');
+    return parseFloat(price);
+  }
   // map owner from address string
-  addTableMapping(Tables.Owners, 'Owner');
-  addFieldMapping(Tables.Owners, Tables.Owners.Fields.Address, v => toHexString(v));
+  addFieldMapping('Owner', Tables.Owners.Fields.Address, v => toHexString(v));
 
   // map kitty from Birth event data
   const kitties = Tables.Kitties;
-  addTableMapping(kitties, 'Birth');
-  addFieldMapping(kitties, kitties.Fields.ID, v => parseInt(v.returnValues.kittyId, 10));
-  addFieldMapping(kitties, kitties.Fields.GenesBody, v => genesToInt(v.genes, 0));
-  addFieldMapping(kitties, kitties.Fields.GenesPattern, v => genesToInt(v.genes, 4));
-  addFieldMapping(kitties, kitties.Fields.GenesEyeColor, v => genesToInt(v.genes, 8));
-  addFieldMapping(kitties, kitties.Fields.GenesEyeType, v => genesToInt(v.genes, 12));
-  addFieldMapping(kitties, kitties.Fields.GenesBodyColor, v => genesToInt(v.genes, 16));
-  addFieldMapping(kitties, kitties.Fields.GenesPatternColor, v => genesToInt(v.genes, 20));
-  addFieldMapping(kitties, kitties.Fields.GenesAccentColor, v => genesToInt(v.genes, 24));
-  addFieldMapping(kitties, kitties.Fields.GenesWild, v => genesToInt(v.genes, 28));
-  addFieldMapping(kitties, kitties.Fields.GenesMouth, v => genesToInt(v.genes, 32));
-  addFieldMapping(kitties, kitties.Fields.GenesUnknown1, v => genesToInt(v.genes, 36));
-  addFieldMapping(kitties, kitties.Fields.GenesUnknown2, v => genesToInt(v.genes, 40));
-  addFieldMapping(kitties, kitties.Fields.GenesUnknown3, v => genesToInt(v.genes, 44));
-  addFieldMapping(kitties, kitties.Fields.Generation, () => 0);
-  addFieldMapping(kitties, kitties.Fields.MatronId, v => parseInt(v.returnValues.matronId, 10));
-  addFieldMapping(kitties, kitties.Fields.PatronId, v => parseInt(v.returnValues.sireId, 10));
-  addFieldMapping(kitties, kitties.Fields.BirthBlock, v => parseInt(v.blockNumber, 10));
-  addFieldMapping(kitties, kitties.Fields.Owner, v => addressToBuffer(v.returnValues.owner));
-  addFieldMapping(kitties, kitties.Fields.ChildrenCount, () => 0);
-  addFieldMapping(kitties, kitties.Fields.NextActionAt, () => 0);
+  addFieldMapping('Birth', kitties.Fields.ID, v => parseInt(v.returnValues.kittyId, 10));
+  addFieldMapping('Birth', kitties.Fields.GenesBody, v => genesToInt(v.genes, 0));
+  addFieldMapping('Birth', kitties.Fields.GenesPattern, v => genesToInt(v.genes, 4));
+  addFieldMapping('Birth', kitties.Fields.GenesEyeColor, v => genesToInt(v.genes, 8));
+  addFieldMapping('Birth', kitties.Fields.GenesEyeType, v => genesToInt(v.genes, 12));
+  addFieldMapping('Birth', kitties.Fields.GenesBodyColor, v => genesToInt(v.genes, 16));
+  addFieldMapping('Birth', kitties.Fields.GenesPatternColor, v => genesToInt(v.genes, 20));
+  addFieldMapping('Birth', kitties.Fields.GenesAccentColor, v => genesToInt(v.genes, 24));
+  addFieldMapping('Birth', kitties.Fields.GenesWild, v => genesToInt(v.genes, 28));
+  addFieldMapping('Birth', kitties.Fields.GenesMouth, v => genesToInt(v.genes, 32));
+  addFieldMapping('Birth', kitties.Fields.GenesUnknown1, v => genesToInt(v.genes, 36));
+  addFieldMapping('Birth', kitties.Fields.GenesUnknown2, v => genesToInt(v.genes, 40));
+  addFieldMapping('Birth', kitties.Fields.GenesUnknown3, v => genesToInt(v.genes, 44));
+  addFieldMapping('Birth', kitties.Fields.Generation, () => 0);
+  addFieldMapping('Birth', kitties.Fields.MatronId, v => parseInt(v.returnValues.matronId, 10));
+  addFieldMapping('Birth', kitties.Fields.PatronId, v => parseInt(v.returnValues.sireId, 10));
+  addFieldMapping('Birth', kitties.Fields.BirthBlock, v => parseInt(v.blockNumber, 10));
+  addFieldMapping('Birth', kitties.Fields.Owner, v => addressToBuffer(v.returnValues.owner));
+  addFieldMapping('Birth', kitties.Fields.ChildrenCount, () => 0);
+  addFieldMapping('Birth', kitties.Fields.NextActionAt, () => 0);
 
   // map kitty from Pregnant event data
   const pregnant = Tables.PregnantEvents;
-  addTableMapping(pregnant, 'Pregnant');
-  addFieldMapping(pregnant, pregnant.Fields.MatronId, v => parseInt(v.returnValues.matronId, 10));
-  addFieldMapping(pregnant, pregnant.Fields.PatronId, v => parseInt(v.returnValues.sireId, 10));
+  addFieldMapping('Pregnant', pregnant.Fields.MatronId, v => parseInt(v.returnValues.matronId, 10));
+  addFieldMapping('Pregnant', pregnant.Fields.PatronId, v => parseInt(v.returnValues.sireId, 10));
   addFieldMapping(
-    pregnant,
+    'Pregnant',
     pregnant.Fields.NextActionAt,
     v => parseInt(v.returnValues.cooldownEndBlock, 10),
   );
-  addFieldMapping(pregnant, pregnant.Fields.BlockNumber, v => parseInt(v.blockNumber, 10));
+  addFieldMapping('Pregnant', pregnant.Fields.BlockNumber, v => parseInt(v.blockNumber, 10));
 
   // map kitty from Pregnant event data
   const transfer = Tables.Transfers;
-  addTableMapping(transfer, 'Transfer');
-  addFieldMapping(transfer, transfer.Fields.From, v => addressToBuffer(v.returnValues.from));
-  addFieldMapping(transfer, transfer.Fields.To, v => addressToBuffer(v.returnValues.to));
-  addFieldMapping(transfer, transfer.Fields.ID, v => parseInt(v.returnValues.tokenId, 10));
-  addFieldMapping(transfer, transfer.Fields.BlockNumber, v => parseInt(v.blockNumber, 10));
+  addFieldMapping('Transfer', transfer.Fields.From, v => addressToBuffer(v.returnValues.from));
+  addFieldMapping('Transfer', transfer.Fields.To, v => addressToBuffer(v.returnValues.to));
+  addFieldMapping('Transfer', transfer.Fields.ID, v => parseInt(v.returnValues.tokenId, 10));
+  addFieldMapping('Transfer', transfer.Fields.BlockNumber, v => parseInt(v.blockNumber, 10));
+
+  // map auction from AuctionCreated event data
+  const auctions = Tables.Auctions;
+  addFieldMapping('AuctionCreated', auctions.Fields.KittyId, v => parseInt(v.returnValues.tokenId, 10));
+  addFieldMapping('AuctionCreated', auctions.Fields.Status, () => 1);
+  addFieldMapping('AuctionCreated', auctions.Fields.Duration, v => parseInt(v.returnValues.duration, 10));
+  addFieldMapping('AuctionCreated', auctions.Fields.StartedBlock, v => parseInt(v.blockNumber, 10));
+  addFieldMapping(
+    'AuctionCreated', auctions.Fields.StartPrice,
+    v => priceToEther(v.returnValues.startingPrice),
+  );
+  addFieldMapping(
+    'AuctionCreated', auctions.Fields.EndPrice,
+    v => priceToEther(v.returnValues.endingPrice),
+  );
+
+  // map auction from AuctionCancelled event data
+  addFieldMapping('AuctionCancelled', auctions.Fields.KittyId, v => parseInt(v.returnValues.tokenId, 10));
+  addFieldMapping('AuctionCancelled', auctions.Fields.Status, () => 3);
+  addFieldMapping('AuctionCancelled', auctions.Fields.EndedBlock, v => parseInt(v.blockNumber, 10));
+
+  // map auction from AuctionSuccessful event data
+  addFieldMapping('AuctionSuccessful', auctions.Fields.KittyId, v => parseInt(v.returnValues.tokenId, 10));
+  addFieldMapping('AuctionSuccessful', auctions.Fields.Status, () => 2);
+  addFieldMapping('AuctionSuccessful', auctions.Fields.EndedBlock, v => parseInt(v.blockNumber, 10));
+  addFieldMapping('AuctionSuccessful', auctions.Fields.BuyPrice, v => priceToEther(v.returnValues.totalPrice));
+  addFieldMapping('AuctionSuccessful', auctions.Fields.Buyer, v => addressToBuffer(v.returnValues.winner));
 
   this.mapData = mapData;
   this.toHexString = toHexString;

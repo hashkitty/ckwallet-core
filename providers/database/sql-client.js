@@ -66,7 +66,7 @@ function SqlClient(config) {
 
   function checkOrderBy(orderBy) {
     return orderBy && (orderBy instanceof Array) &&
-    orderBy.every(v => /^[a-zA-Z0-9\s]+$/.test(v));
+    orderBy.every(v => /^[a-zA-Z0-9\s.]+$/.test(v));
   }
   // return single row
   function get(tableName, fieldNames, where, orderBy) {
@@ -95,7 +95,7 @@ function SqlClient(config) {
   }
 
   // return all rows
-  function all(tableName, fieldNames, where, orderBy, limit = null, join = null) {
+  function all(tableName, fieldNames, where, orderBy, limit = null, join = null, leftJoin = null) {
     if (orderBy && !checkOrderBy(orderBy)) {
       throw new Error('Invalid arg: orderBy');
     }
@@ -105,7 +105,7 @@ function SqlClient(config) {
     }
     let sql = `SELECT ${fieldNames.join(',')} FROM ${tableName}`;
     if (join) {
-      sql += ` JOIN ${join}`;
+      sql += `${leftJoin ? ' LEFT' : ''} JOIN ${join}`;
     }
     if (where) {
       sql += ` WHERE ${where}`;

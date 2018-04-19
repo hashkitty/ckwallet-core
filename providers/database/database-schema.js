@@ -49,7 +49,6 @@ exports.Tables = {
     Fields: {
       ID: tableField('ID', false),
       KittyId: tableField('KittyId', false),
-      Seller: tableField('Seller', false),
       StartedBlock: tableField('StartedBlock', false),
       Type: tableField('Type', false),
       Status: tableField('Status', false),
@@ -59,7 +58,6 @@ exports.Tables = {
       BuyPrice: tableField('BuyPrice', false),
       Duration: tableField('Duration', false),
       Buyer: tableField('Buyer', false),
-      BuyBlock: tableField('BuyBlock', false),
     },
   },
   ImportHistory: {

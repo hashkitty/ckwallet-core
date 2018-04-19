@@ -1,7 +1,7 @@
 {
   "name": "ckwallet-core",
   "productName": "CK wallet core library",
-  "version": "0.2.8",
+  "version": "0.3.1",
   "description": "",
   "main": "./index.js",
   "scripts": {
@@ -24,7 +24,8 @@
     "log": "^1.4.0",
     "memory-cache": "^0.2.0",
     "sqlite3": "^4.0.0",
-    "web3": "^1.0.0-beta.29"
+    "web3": "^1.0.0-beta.29",
+    "web3-utils": "^1.0.0-beta.34"
   },
   "devDependencies": {
     "eslint": "^4.19.1",

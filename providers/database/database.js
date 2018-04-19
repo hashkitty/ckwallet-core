@@ -36,6 +36,21 @@ function Database(config) {
     return res;
   }
 
+  async function getLastAuctionBlock(type) {
+    let res = 0;
+    const where = `${schema.Tables.Auctions.Fields.Type.Name}=${type}`;
+    const row = await sqlClient.get(
+      schema.Tables.Auctions.Name,
+      [schema.Tables.Auctions.Fields.StartedBlock.Name],
+      where,
+      [`${schema.Tables.Auctions.Fields.StartedBlock.Name} DESC`],
+    );
+    if (row) {
+      res = row[schema.Tables.Auctions.Fields.StartedBlock.Name];
+    }
+    return res;
+  }
+
   async function getImportHistoryBlockNumber(eventName) {
     let res = 0;
     const where = `${schema.Tables.ImportHistory.Fields.EventName.Name}='${eventName}'`;
@@ -55,6 +70,12 @@ function Database(config) {
     switch (eventName) {
       case 'Birth':
         res = await getLastKittyBlock();
+        break;
+      case 'SaleAuctionCreated':
+        res = await getLastAuctionBlock(1);
+        break;
+      case 'SireAuctionCreated':
+        res = await getLastAuctionBlock(2);
         break;
       default:
         res = await getImportHistoryBlockNumber(eventName);
@@ -219,6 +240,87 @@ function Database(config) {
     return res;
   }
 
+  async function getKittiesWithAuctions(query, orderBy = null, limit = 100) {
+    const kittyFields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => `k.${f.Name}`);
+    const auctionFields = [
+      schema.Tables.Auctions.Fields.StartPrice,
+      schema.Tables.Auctions.Fields.EndPrice,
+    ].map(f => `a.${f.Name} AS Auction${f.Name}`);
+    const fields = kittyFields.concat(auctionFields);
+    const rows = await sqlClient.all(
+      `${schema.Tables.Kitties.Name} AS k`,
+      fields,
+      query,
+      orderBy || [`k.${schema.Tables.Kitties.Fields.ID.Name} DESC`],
+      limit,
+      `${schema.Tables.Auctions.Name} AS a ON a.${schema.Tables.Auctions.Fields.KittyId.Name} = k.${schema.Tables.Kitties.Fields.ID.Name}`,
+      true,
+    );
+    let res;
+    if (rows && rows.length && limit) {
+      // get total if limit is specified for pagination
+      const total = await sqlClient.get(
+        schema.Tables.Kitties.Name,
+        ['COUNT(*) AS cnt'],
+        query,
+      );
+      res = { rows, total: total.cnt };
+    } else {
+      res = rows;
+    }
+    return res;
+  }
+
+
+  async function addAuction(data, type) {
+    const eventData = data;
+    const mapped = mapper.mapData('AuctionCreated', eventData);
+    mapped[schema.Tables.Auctions.Fields.Type.Name] = type;
+
+    const res = await sqlClient.insert(
+      schema.Tables.Auctions.Name,
+      mapped,
+    );
+    return res;
+  }
+
+  async function cancelAuction(data, type) {
+    const eventData = data;
+    const mapped = mapper.mapData('AuctionCancelled', eventData);
+    const { Auctions } = schema.Tables;
+    mapped[Auctions.Fields.Type.Name] = type;
+    const where = `${Auctions.Fields.ID.Name}=(SELECT ID FROM ${Auctions.Name} ` +
+    `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
+    `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
+    `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
+
+    const set = `${Auctions.Fields.Status.Name}=${mapped[Auctions.Fields.Status.Name]},` +
+      `${Auctions.Fields.EndedBlock.Name}=${mapped[Auctions.Fields.EndedBlock.Name]}`;
+
+    await sqlClient.update(Auctions.Name, set, where);
+  }
+
+  async function completeAuction(data, type) {
+    const eventData = data;
+    const mapped = mapper.mapData('AuctionSuccessful', eventData);
+    const { Auctions } = schema.Tables;
+    mapped[Auctions.Fields.Type.Name] = type;
+    const buyer = mapped[Auctions.Fields.Buyer.Name];
+    const buyerId = await getOrAddOwner(buyer);
+
+    const where = `${Auctions.Fields.ID.Name}=(SELECT ID FROM ${Auctions.Name} ` +
+    `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
+    `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
+    `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
+
+    const set = `${Auctions.Fields.Status.Name}=${mapped[Auctions.Fields.Status.Name]},` +
+    `${Auctions.Fields.Buyer.Name}=${buyerId},` +
+    `${Auctions.Fields.BuyPrice.Name}=${mapped[Auctions.Fields.BuyPrice.Name]},` +
+    `${Auctions.Fields.EndedBlock.Name}=${mapped[Auctions.Fields.EndedBlock.Name]}`;
+
+    await sqlClient.update(Auctions.Name, set, where);
+  }
+
   this.open = open;
   this.close = close;
   this.getEventLastSync = getEventLastSync;
@@ -228,6 +330,10 @@ function Database(config) {
   this.updateKittyOwner = updateKittyOwner;
   this.getTraits = getTraits;
   this.getKitties = getKitties;
+  this.getKittiesWithAuctions = getKittiesWithAuctions;
+  this.addAuction = addAuction;
+  this.cancelAuction = cancelAuction;
+  this.completeAuction = completeAuction;
   this.queryParser = new QueryParser(this);
 }
 

@@ -115,7 +115,7 @@ CREATE TABLE "ImportHistory" (
     "BlockNumber" [bigint] NOT NULL
 );
 INSERT INTO ImportHistory(EventName, BlockNumber)
-VALUES("Pregnant", 0), ("Transfer", 0);
+VALUES("Pregnant", 0), ("Transfer", 0), ("SaleAuctionCancelled", 0), ("SaleAuctionSuccessful", 0), ("SireAuctionCancelled", 0), ("SireAuctionSuccessful", 0)
 
 --Cooldowns
 CREATE Table "Cooldowns" (
