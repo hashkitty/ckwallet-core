@@ -243,17 +243,21 @@ function Database(config) {
   async function getKittiesWithAuctions(query, orderBy = null, limit = 100) {
     const kittyFields = schema.getFieldsOfTable(schema.Tables.Kitties).map(f => `k.${f.Name}`);
     const auctionFields = [
+      schema.Tables.Auctions.Fields.StartedBlock,
+      schema.Tables.Auctions.Fields.Duration,
       schema.Tables.Auctions.Fields.StartPrice,
       schema.Tables.Auctions.Fields.EndPrice,
     ].map(f => `a.${f.Name} AS Auction${f.Name}`);
     const fields = kittyFields.concat(auctionFields);
+    const join = `${schema.Tables.Auctions.Name} AS a ON a.${schema.Tables.Auctions.Fields.KittyId.Name} = k.${schema.Tables.Kitties.Fields.ID.Name} ` +
+    `AND a.${schema.Tables.Auctions.Fields.Status.Name} = 1`;
     const rows = await sqlClient.all(
       `${schema.Tables.Kitties.Name} AS k`,
       fields,
       query,
       orderBy || [`k.${schema.Tables.Kitties.Fields.ID.Name} DESC`],
       limit,
-      `${schema.Tables.Auctions.Name} AS a ON a.${schema.Tables.Auctions.Fields.KittyId.Name} = k.${schema.Tables.Kitties.Fields.ID.Name}`,
+      join,
       true,
     );
     let res;
