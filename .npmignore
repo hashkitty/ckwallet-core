@@ -1,5 +1,6 @@
 .vscode
 config
+docs
 data
 logs
 test
