@@ -10,6 +10,12 @@ exports.AuctionTypes = {
   Sire: 2,
 };
 
+exports.Views = {
+  ActiveAuctions: {
+    Name: 'ActiveAuctions',
+  },
+};
+
 exports.Tables = {
   Kitties: {
     Name: 'Kitties',

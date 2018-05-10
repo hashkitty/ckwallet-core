@@ -50,11 +50,13 @@ VALUES
 (9, 2, 0, "forgetmenot"),
 (11, 2, 1, "coralsunrise"),
 (13, 2, 0, "doridnudibranch"),
+(14, 2, 0, "parakeet"),
 (15, 2, 1, "cyan"),
 (16, 2, 0, "pumpkin"),
 (17, 2, 0, "limegreen"),
 (19, 2, 0, "bubblegum"),
 (20, 2, 0, "twilightsparkle"),
+(23, 2, 0, "eclipse"),
 (24, 2, 0, "babypuke"),
 --eye type
 (1, 3, 1, "wonky"),
@@ -157,4 +159,7 @@ VALUES
 --wild 
 (17, 7, 0, "elk"),
 (19, 7, 0, "trioculus"),
-(20, 7, 0, "daemonwings");
+(20, 7, 0, "daemonwings"),
+(23, 7, 0, "daemonhorns"),
+--environment
+(16, 9, 1, "salty")

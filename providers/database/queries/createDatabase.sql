@@ -42,7 +42,7 @@ CREATE TABLE "Owners" (
     "Address" [binary] (20) NOT NULL UNIQUE
 );
 --Owner of kitty 0
-INSERT INTO Owners("Address") VALUES (0);
+INSERT INTO Owners("Address") VALUES ('0x00000000000000000000');
 
 --Kitties
 CREATE TABLE "Kitties" ( 
@@ -115,7 +115,7 @@ CREATE TABLE "ImportHistory" (
     "BlockNumber" [bigint] NOT NULL
 );
 INSERT INTO ImportHistory(EventName, BlockNumber)
-VALUES("Pregnant", 0), ("Transfer", 0), ("SaleAuctionCancelled", 0), ("SaleAuctionSuccessful", 0), ("SireAuctionCancelled", 0), ("SireAuctionSuccessful", 0)
+VALUES("Pregnant", 0), ("Transfer", 0), ("SaleAuctionCancelled", 0), ("SaleAuctionSuccessful", 0), ("SireAuctionCancelled", 0), ("SireAuctionSuccessful", 0);
 
 --Cooldowns
 CREATE Table "Cooldowns" (
@@ -164,7 +164,16 @@ VALUES
 (6, "Accent Color"),
 (7, "Wild"),
 (8, "Mouth"),
-(9, "Unknown1"),
+(9, "Environment"),
 (10, "Unknown2"),
 (11, "Unknown3");
+
+CREATE VIEW ActiveAuctions AS
+SELECT * FROM Auctions WHERE Status=1;
+
+CREATE INDEX IND_KittyID ON Kitties (ID);
+CREATE INDEX IND_AuctionID ON Auctions (ID);
+CREATE INDEX IND_AuctionKittyIDStatus ON Auctions (KittyID, Status);
+CREATE INDEX IND_OwnerID ON Owners (ID);
+CREATE INDEX IND_OwnerAddress ON Owners (Address);
 

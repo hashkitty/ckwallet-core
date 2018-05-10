@@ -117,10 +117,48 @@ describe('query-parser', () => {
     assert(res.toUpperCase() === 'K.GENESEYECOLOR & 0XFFFFFFFF = 16843009', `invalid result ${res}`);
   });
 
+  it('should make valid kai trait type query with wildcard', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    let res = database.queryParser.translateUserInput('body:_2');
+    assert(res.toUpperCase() === 'K.GENESBODY & 0XFF00 = 256', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('mouth:__2');
+    assert(res.toUpperCase() === 'K.GENESMOUTH & 0XFF0000 = 65536', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('mouth:___2');
+    assert(res.toUpperCase() === 'K.GENESMOUTH & 0XFF000000 = 16777216', `invalid result ${res}`);
+  });
+
+  it('should make valid kai trait type query by unknown types', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    const res = database.queryParser.translateUserInput('unknown1:2');
+    assert(res.toUpperCase() === 'K.GENESUNKNOWN1 & 0XFF = 1', `invalid result ${res}`);
+  });
+
   it('should return input suggestions', async () => {
     const database = new Database(config.database);
     await database.open();
     const res = database.queryParser.getInputSuggestions();
     assert(res && res.length >= 158);
   });
+
+  it('should make valid sale sire query', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    let res = database.queryParser.translateUserInput('sale');
+    assert(res.toUpperCase() === 'A.TYPE=1 AND A.STATUS=1', `invalid result ${res}`);
+
+    res = database.queryParser.translateUserInput('sire');
+    assert(res.toUpperCase() === 'A.TYPE=2 AND A.STATUS=1', `invalid result ${res}`);
+  });
+
+  it('should make valid sale/sire query to select from DB with limit', async () => {
+    const database = new Database(config.database);
+    await database.open();
+    const query = database.queryParser.translateUserInput('sire');
+    const res = await database.getKittiesWithAuctions(query);
+    assert(res && res.rows && res.rows.length === 100 && res.total > 100, `invalid result ${res.rows.length}`);
+  }).timeout(5000);
 });

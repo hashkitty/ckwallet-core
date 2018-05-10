@@ -35,6 +35,7 @@ function DatabaseSync(config) {
     const lastSyncBlock = await database.getEventLastSync(eventName);
     const pageSize = 1000;
     let startBlock = lastSyncBlock + 1;
+    logger.log(`${eventName} last synced at ${lastSyncBlock} current ${currentBlock}`);
     while (startBlock < currentBlock) {
       const startTime = process.hrtime();
       const endBlock = startBlock + pageSize;
@@ -78,6 +79,7 @@ function DatabaseSync(config) {
       await synchronizeEvent(database, kittyClient, currentBlock, 'SireAuctionCreated', (d, e) => proccessAuctionCreated(d, e, 2));
       await synchronizeEvent(database, kittyClient, currentBlock, 'SireAuctionCancelled', (d, e) => proccessAuctionCancelled(d, e, 2));
       await synchronizeEvent(database, kittyClient, currentBlock, 'SireAuctionSuccessful', (d, e) => proccessAuctionCompleted(d, e, 2));
+      await database.optimize();
       logger.log('Synchronization completed');
     } catch (err) {
       logger.error(`Synchronization error: ${err}`);

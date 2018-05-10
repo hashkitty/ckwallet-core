@@ -12,15 +12,15 @@ function Keyword(name, sql) {
 }
 
 function QueryParser(database) {
-  const userInputValidator = /^[a-zA-Z0-9:\s]+$/;
+  const userInputValidator = /^[a-zA-Z0-9:\s_]+$/;
   const userStatementSeparator = ' ';
   const userStatementPrefixSeparator = ':';
   const allowedSqlOperator = ['and', 'or'];
 
   const Keywords = [
     new Keyword('virgin', `k.${Tables.Kitties.Fields.ChildrenCount.Name}=0`),
-    new Keyword('sale', `a.${Tables.Auctions.Fields.Type.Name}=1`),
-    new Keyword('sire', `a.${Tables.Auctions.Fields.Type.Name}=2`),
+    new Keyword('sale', `a.${Tables.Auctions.Fields.Type.Name}=1 AND a.${Tables.Auctions.Fields.Status.Name}=1`),
+    new Keyword('sire', `a.${Tables.Auctions.Fields.Type.Name}=2 AND a.${Tables.Auctions.Fields.Status.Name}=1`),
   ];
 
   const QueryTypes = Object.freeze({
@@ -40,10 +40,13 @@ function QueryParser(database) {
         const trait = traits[i];
         assert(!traitMap[trait.Name]);
         traitMap[trait.Name] = trait;
-        traitMap[trait.Name] = trait;
         const location = trait.Location.toLowerCase().replace(' ', '');
         locations[location] = 0;
       }
+      // add unknown location to search
+      locations.unknown1 = 0;
+      locations.unknown2 = 0;
+      locations.unknown3 = 0;
       QueryTypes.TraitType.prefixes.push(...Object.keys(locations));
     }
   }
@@ -84,18 +87,20 @@ function QueryParser(database) {
   }
 
   function getTraitTypeQuery(prefix, word) {
-    if (!/^[a-zA-Z]+$/.test(prefix) || !/^[a-zA-Z0-9]+$/.test(word)) {
+    if (!/^[a-zA-Z]+[1-3]?$/.test(prefix) || !/^[a-zA-Z0-9_]+$/.test(word)) {
       throw new Error('Invalid trait type query');
     }
     let value = 0;
-    let mask = 'ffffffff';
+    let mask = 0;
     if (word.startsWith('0x')) {
       // this hex value
       if (word.length > 10 || word.length < 3) {
         throw new Error('Invalid trait type query');
       }
       value = parseInt(word.substring(2), 16);
-      mask = mask.substr(8 - (word.length - 2));
+      for (let i = 0; i < (word.length - 2) / 2; i += 1) {
+        mask |= 255 << i*8; //eslint-disable-line
+      }
     } else {
       // this is kai
       if (word.length > 4 || word.length < 1) {
@@ -103,12 +108,16 @@ function QueryParser(database) {
       }
       value = 0;
       for (let i = 0; i < word.length; i += 1) {
-        value |= geneUtils.kaiToInt(word[i]) << i*8; //eslint-disable-line
+        if (word[i] !== '_') {
+          value |= geneUtils.kaiToInt(word[i]) << i*8; //eslint-disable-line
+          mask |= 255 << i*8; //eslint-disable-line
+        }
       }
-      mask = mask.substr(8 - (word.length * 2));
     }
-
-    return `k.genes${prefix} & 0x${mask} = ${value}`;
+    // convert to unsigned
+    mask = mask >>> 0; //eslint-disable-line 
+    const maskString = mask.toString(16);
+    return `k.genes${prefix} & 0x${maskString} = ${value}`;
   }
 
   function getTraitQuery(prefix, word) {
@@ -130,7 +139,7 @@ function QueryParser(database) {
       Tables.Kitties.Fields.GenesAccentColor,
       Tables.Kitties.Fields.GenesWild,
       Tables.Kitties.Fields.GenesMouth,
-      Tables.Kitties.Fields.GenesUnknown1,
+      Tables.Kitties.Fields.GenesEnvironment,
       Tables.Kitties.Fields.GenesUnknown2,
       Tables.Kitties.Fields.GenesUnknown3,
     ];

@@ -13,6 +13,12 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Launch Sync",
+            "program": "${workspaceFolder}/workers/synchronization/index.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Mocha Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "args": [

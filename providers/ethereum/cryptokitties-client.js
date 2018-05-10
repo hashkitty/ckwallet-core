@@ -15,26 +15,29 @@ function CryptoKittiesClient(config) {
     ckSireAuctionAbi,
   );
 
-  function getEvents(eventName, fromBlock, toBlock) {
+  async function getEvents(eventName, fromBlock, toBlock, mapper = null) {
     let res = null;
     switch (eventName) {
       case 'Birth':
       case 'Transfer':
       case 'Pregnant':
-        res = ethClient.getEvents(coreContract, eventName, fromBlock, toBlock);
+        res = await ethClient.getEvents(coreContract, eventName, fromBlock, toBlock);
         break;
       case 'SaleAuctionCreated':
       case 'SaleAuctionCancelled':
       case 'SaleAuctionSuccessful':
-        res = ethClient.getEvents(saleContract, eventName.replace('Sale', ''), fromBlock, toBlock);
+        res = await ethClient.getEvents(saleContract, eventName.replace('Sale', ''), fromBlock, toBlock);
         break;
       case 'SireAuctionCreated':
       case 'SireAuctionCancelled':
       case 'SireAuctionSuccessful':
-        res = ethClient.getEvents(sireContract, eventName.replace('Sire', ''), fromBlock, toBlock);
+        res = await ethClient.getEvents(sireContract, eventName.replace('Sire', ''), fromBlock, toBlock);
         break;
       default:
         break;
+    }
+    if (mapper && res && res.length) {
+      res = res.map(mapper);
     }
     return res;
   }

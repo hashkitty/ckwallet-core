@@ -5,6 +5,7 @@ const constants = require('./constants');
 const Cache = require('./cache');
 const QueryParser = require('./query-parser');
 const { BigInteger } = require('bignumber');
+const assert = require('assert');
 
 function Database(config) {
   const cache = new Cache();
@@ -97,10 +98,9 @@ function Database(config) {
     }
   }
 
-
-  async function getOrAddOwner(address) {
+  async function getOrAddOwner(address, addIfNotExist = true) {
     const hexAddress = mapper.toHexString(address);
-    const cacheKey = `getOrAddOwner(${hexAddress})`;
+    const cacheKey = `owners(${hexAddress})`;
     // read from memory cache if possible
     const res = await cache.getOrAdd(cacheKey, async () => {
       const where = `${schema.Tables.Owners.Fields.Address.Name}='${hexAddress}'`;
@@ -109,13 +109,125 @@ function Database(config) {
         [schema.Tables.Owners.Fields.ID.Name],
         where,
       );
-      if (!owner) {
+      if (!owner && addIfNotExist) {
         const newOwner = mapper.mapData('Owner', address);
         const ownerId = await sqlClient.insert(schema.Tables.Owners.Name, newOwner);
         owner = { ID: ownerId };
       }
-      return owner.ID;
+      return owner && owner.ID;
     });
+    return res;
+  }
+
+  async function getEntities(table, field, values) {
+    const tableObj = schema.Tables[table];
+    const fields = schema.getFieldsOfTable(tableObj).map(f => f.Name);
+    const where = `${field} IN ('${values.join('\',\'')}')`;
+    const res = await sqlClient.all(table, fields, where);
+    return res;
+  }
+
+  async function getEntitiesPaged(table, field, values, pageSize) {
+    const sliced = [];
+    while (values.length > pageSize) {
+      sliced.push(values.splice(0, pageSize));
+    }
+    sliced.push(values);
+
+    const promises = sliced.map(s => getEntities(table, field, s));
+    const res = await Promise.all(promises);
+    return Array.prototype.concat(...res);
+  }
+
+  async function getEntitiesCached(table, field, values) {
+    const res = {};
+    const nonCachedValues = [];
+    const cacheKeyPrefix = `${table}_${field}`;
+    for (let i = 0; i < values.length; i += 1) {
+      const value = values[i];
+      const cacheKey = `${cacheKeyPrefix}_${value}`;
+      const cached = cache.get(cacheKey);
+      if (cached) {
+        res[value] = cached;
+      } else {
+        nonCachedValues.push(value);
+      }
+    }
+    nonCachedValues.forEach((v) => { res[v] = null; });
+    const entities = await getEntitiesPaged(
+      table,
+      field,
+      nonCachedValues,
+      100,
+    );
+    entities.forEach((e) => {
+      const cacheKey = `${cacheKeyPrefix}_${e[field]}`;
+      cache.put(cacheKey, e);
+      res[e[field]] = e;
+    });
+    return res;
+  }
+
+  async function resolveOwnerAddresses(addresses) {
+    const resolved = await getEntitiesCached(
+      schema.Tables.Owners.Name,
+      schema.Tables.Owners.Fields.Address.Name,
+      addresses,
+    );
+
+    const pendingAddresses = Object.keys(resolved).filter(k => resolved[k] === null);
+
+    if (pendingAddresses.length > 0) {
+      const pendingInserts = pendingAddresses.map((a) => {
+        return {
+          Address: a,
+        };
+      });
+      await sqlClient.bulkInsert(schema.Tables.Owners.Name, pendingInserts);
+    }
+
+    const inserted = await getEntitiesCached(
+      schema.Tables.Owners.Name,
+      schema.Tables.Owners.Fields.Address.Name,
+      pendingAddresses,
+    );
+
+    Object.assign(resolved, inserted);
+
+    // make sure all resolverd
+    Object.keys(resolved).forEach((k) => {
+      assert(resolved[k] !== null, `Could not resolve owner ${k}`);
+    });
+
+    return resolved;
+  }
+
+  async function resolveKittyParents(kitties, cached = true) {
+    const ids = [];
+    for (let i = 0; i < kitties.length; i += 1) {
+      if (ids.findIndex(v => v === kitties[i].MatronId) === -1) {
+        ids.push(kitties[i].MatronId);
+      }
+      if (ids.findIndex(v => v === kitties[i].PatronId) === -1) {
+        ids.push(kitties[i].PatronId);
+      }
+    }
+    const getter = cached ? getEntitiesCached : getEntitiesPaged;
+    const entities = await getter(
+      schema.Tables.Kitties.Name,
+      schema.Tables.Kitties.Fields.ID.Name,
+      ids,
+      200,
+    );
+    let res = null;
+    if (cached) {
+      res = entities;
+    } else {
+      res = {};
+      entities.forEach((e) => {
+        res[e[schema.Tables.Kitties.Fields.ID.Name]] = e;
+      });
+    }
     return res;
   }
 
@@ -135,10 +247,14 @@ function Database(config) {
     return res;
   }
 
-  async function addKitty(data) {
+  function mapBirthEventData(data) {
     const eventData = data;
     eventData.genes = new BigInteger(data.returnValues.genes);
-    const mapped = mapper.mapData('Birth', eventData);
+    return mapper.mapData('Birth', eventData);
+  }
+
+  async function addKitty(data) {
+    const mapped = mapBirthEventData(data);
     const owner = mapped.Owner;
     const ownerId = await getOrAddOwner(owner);
     mapped.Owner = ownerId;
@@ -156,6 +272,51 @@ function Database(config) {
       mapped,
     );
     return res;
+  }
+
+  async function addKitties(kitties) {
+    if (kitties && kitties.length > 0) {
+      await sqlClient.bulkInsert(
+        schema.Tables.Kitties.Name,
+        kitties,
+      );
+    }
+  }
+
+  async function updateKitties(kitties) {
+    const keys = Object.keys(kitties);
+    const updates = [];
+    keys.forEach((k) => {
+      const update = kitties[k];
+      update.key = { [schema.Tables.Kitties.Fields.ID.Name]: k };
+      updates.push(update);
+    });
+
+    await sqlClient.bulkUpdate(
+      schema.Tables.Kitties.Name,
+      updates,
+    );
+  }
+
+  async function updateAuctions(auctions) {
+    if (auctions && auctions.length > 0) {
+      await sqlClient.bulkUpdate(
+        schema.Tables.Auctions.Name,
+        auctions,
+      );
+    }
+  }
+
+  async function addAuctions(auctions, type) {
+    auctions.forEach((a) => {
+      a[schema.Tables.Auctions.Fields.Type.Name] = type; // eslint-disable-line
+    });
+    if (auctions && auctions.length > 0) {
+      await sqlClient.bulkInsert(
+        schema.Tables.Auctions.Name,
+        auctions,
+      );
+    }
   }
 
   function getCooldownIndex(kitty) {
@@ -198,7 +359,7 @@ function Database(config) {
 
   async function getTraits() {
     const join = `${schema.Tables.TraitTypes.Name} AS l ` +
-    `ON t.${schema.Tables.Traits.Fields.TraitTypeID.Name}=l.${schema.Tables.TraitTypes.Fields.ID.Name}`;
+      `ON t.${schema.Tables.Traits.Fields.TraitTypeID.Name}=l.${schema.Tables.TraitTypes.Fields.ID.Name}`;
     const res = await sqlClient.all(
       `${schema.Tables.Traits.Name} AS t`,
       [
@@ -250,8 +411,8 @@ function Database(config) {
       schema.Tables.Auctions.Fields.EndPrice,
     ].map(f => `a.${f.Name} AS Auction${f.Name}`);
     const fields = kittyFields.concat(auctionFields);
-    const join = `${schema.Tables.Auctions.Name} AS a ON a.${schema.Tables.Auctions.Fields.KittyId.Name} = k.${schema.Tables.Kitties.Fields.ID.Name} ` +
-    `AND a.${schema.Tables.Auctions.Fields.Status.Name} = 1`;
+    const join = `${schema.Views.ActiveAuctions.Name} AS a ON a.${schema.Tables.Auctions.Fields.KittyId.Name} = k.${schema.Tables.Kitties.Fields.ID.Name} ` +
+      `AND a.${schema.Tables.Auctions.Fields.Status.Name} = 1`;
     const rows = await sqlClient.all(
       `${schema.Tables.Kitties.Name} AS k`,
       fields,
@@ -328,10 +489,10 @@ function Database(config) {
     const { Auctions } = schema.Tables;
     mapped[Auctions.Fields.Type.Name] = type;
     const where = `${Auctions.Fields.ID.Name}=(SELECT ID FROM ${Auctions.Name} ` +
-    `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
-    `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
-    `AND  ${Auctions.Fields.Type.Name}=${mapped[Auctions.Fields.Type.Name]} ` +
-    `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
+      `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
+      `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
+      `AND  ${Auctions.Fields.Type.Name}=${mapped[Auctions.Fields.Type.Name]} ` +
+      `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
 
     const set = `${Auctions.Fields.Status.Name}=${mapped[Auctions.Fields.Status.Name]},` +
       `${Auctions.Fields.EndedBlock.Name}=${mapped[Auctions.Fields.EndedBlock.Name]}`;
@@ -348,17 +509,21 @@ function Database(config) {
     const buyerId = await getOrAddOwner(buyer);
 
     const where = `${Auctions.Fields.ID.Name}=(SELECT ID FROM ${Auctions.Name} ` +
-    `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
-    `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
-    `AND  ${Auctions.Fields.Type.Name}=${mapped[Auctions.Fields.Type.Name]} ` +
-    `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
+      `WHERE ${Auctions.Fields.StartedBlock.Name} < ${mapped[Auctions.Fields.EndedBlock.Name]} ` +
+      `AND  ${Auctions.Fields.KittyId.Name}=${mapped[Auctions.Fields.KittyId.Name]} ` +
+      `AND  ${Auctions.Fields.Type.Name}=${mapped[Auctions.Fields.Type.Name]} ` +
+      `ORDER BY ${Auctions.Fields.StartedBlock.Name} DESC LIMIT 1)`;
 
     const set = `${Auctions.Fields.Status.Name}=${mapped[Auctions.Fields.Status.Name]},` +
-    `${Auctions.Fields.Buyer.Name}=${buyerId},` +
-    `${Auctions.Fields.BuyPrice.Name}=${mapped[Auctions.Fields.BuyPrice.Name]},` +
-    `${Auctions.Fields.EndedBlock.Name}=${mapped[Auctions.Fields.EndedBlock.Name]}`;
+      `${Auctions.Fields.Buyer.Name}=${buyerId},` +
+      `${Auctions.Fields.BuyPrice.Name}=${mapped[Auctions.Fields.BuyPrice.Name]},` +
+      `${Auctions.Fields.EndedBlock.Name}=${mapped[Auctions.Fields.EndedBlock.Name]}`;
 
     await sqlClient.update(Auctions.Name, set, where);
+  }
+
+  async function optimize() {
+    await sqlClient.run('PRAGMA OPTIMIZE');
   }
 
   this.open = open;
@@ -376,6 +541,15 @@ function Database(config) {
   this.completeAuction = completeAuction;
   this.getAuctions = getAuctions;
   this.queryParser = new QueryParser(this);
+  this.mapper = mapper;
+  this.mapBirthEventData = mapBirthEventData;
+  this.resolveOwnerAddresses = resolveOwnerAddresses;
+  this.addKitties = addKitties;
+  this.optimize = optimize;
+  this.resolveKittyParents = resolveKittyParents;
+  this.updateKitties = updateKitties;
+  this.addAuctions = addAuctions;
+  this.updateAuctions = updateAuctions;
 }
 
 module.exports = Database;

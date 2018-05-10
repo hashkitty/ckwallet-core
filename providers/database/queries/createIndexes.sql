@@ -13,3 +13,5 @@ CREATE INDEX IND_AuctionKittyID ON Auctions (KittyID);
 CREATE INDEX IND_AuctionID ON Auctions (ID);
 CREATE INDEX IND_AuctionType ON Auctions (Type);
 CREATE INDEX IND_AuctionStatus ON Auctions (Status);
+CREATE INDEX IND_OwnerID ON Owners (ID);
+CREATE INDEX IND_OwnerAddress ON Owners (Address);
